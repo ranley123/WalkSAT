@@ -15,6 +15,7 @@ public class Clause {
     }
 
     public void updateAssignment(HashMap<Integer, Integer> assignmentMap){
+        assignment = new ArrayList<>();
         for(int i = 0 ; i < literals.size(); i++){
             int var = literals.get(i);
             if(assignmentMap.containsKey(var)){
@@ -44,9 +45,6 @@ public class Clause {
         literals.add(literal);
     }
 
-    public void flipLiteralAt(int index){
-        literals.set(index, literals.get(index) == 1? 0: 1);
-    }
 
     public ArrayList<Integer> getLiterals(){
         return literals;

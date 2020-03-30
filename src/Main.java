@@ -14,7 +14,9 @@ public class Main {
     private HashMap<Integer, Integer> assignmentMap;
     private ArrayList<Clause> falseClauses;
     private HashMap<Integer, ArrayList<Clause>> clausesContainingLiteralMap;
-    private int flipTimes;
+    private int flipTimes = 0;
+    private double p;
+    private Random random;
 
     public static void main(String [] args){
         Main walkSAT = new Main();
@@ -27,6 +29,8 @@ public class Main {
         falseClauses = new ArrayList<>();
         assignmentMap = new HashMap<>();
         clausesContainingLiteralMap = new HashMap<>();
+        p = 0.1;
+        random = new Random();
     }
 
     private void run(){
@@ -35,10 +39,36 @@ public class Main {
         updateClauseAssignment();
 
         initialiseClausesContainingLiteral();
-        initialiseFalseClauses();
+        updateFalseClauses();
 
-        System.out.println(assignmentMap);
+//        System.out.println(assignmentMap);
         System.out.println(falseClauses);
+//        System.out.println(clausesContainingLiteralMap);
+        for(Clause clause: clauses){
+            System.out.println(clause.assignment);
+        }
+        while(!completed()){
+            Clause curClause = getRandomFalseClause();
+            double r = random.nextDouble();
+            int var;
+
+            if(r > p){
+                var = pickVar(curClause);
+            }
+            else{
+                var = random.nextInt(numVar) + 1;
+            }
+            flip(var);
+        }
+
+
+        System.out.println("Flips: " + flipTimes);
+
+        System.out.println("Solution: " + assignmentMap.values());
+
+        for(Clause clause: clauses){
+            System.out.println(clause.assignment);
+        }
     }
 
 
@@ -79,15 +109,18 @@ public class Main {
     private void initialiseAssignmentMap(){
         Random random = new Random();
         for(int i = 1; i < numVar + 1; i++){
-            assignmentMap.put(i, random.nextInt(2));
+            int temp = random.nextInt(2);
+            assignmentMap.put(i, temp);
         }
     }
 
     private void initialiseClausesContainingLiteral(){
-        for(int i = 1; i < numVar + 1; i++){
+        for(int i = -1 * numVar; i < numVar + 1; i++){
+            if(i == 0)
+                continue;
             ArrayList<Clause> temp = new ArrayList<>();
             for(Clause clause: clauses){
-                if (clause.hasLiteral(i) || clause.hasLiteral(i * -1)){
+                if (clause.hasLiteral(i)){
                     temp.add(clause);
                 }
             }
@@ -95,9 +128,11 @@ public class Main {
         }
     }
 
-    private void initialiseFalseClauses(){
+    private void updateFalseClauses(){
+        falseClauses = new ArrayList<>();
+
         for(Clause clause: clauses){
-            System.out.println(clause.assignment);
+//            System.out.println(clause.assignment);
             if(clause.getNumSatisfiedLiterals() == 0){
                 falseClauses.add(clause);
             }
@@ -112,7 +147,6 @@ public class Main {
     }
 
     private boolean completed(){
-        int counter = 0;
         for(Clause clause: clauses){
             if(clause.getNumSatisfiedLiterals() == 0)
                 return false;
@@ -122,8 +156,47 @@ public class Main {
 
     private void flip(int var){
         flipTimes++;
-        assignmentMap.put(var, assignmentMap.get(var) == 1? 0 : 1);
+        assignmentMap.put(Math.abs(var), assignmentMap.get(Math.abs(var)) == 1? 0 : 1);
+
         updateClauseAssignment();
+        updateFalseClauses();
+        initialiseClausesContainingLiteral();
+    }
+
+    private Clause getRandomFalseClause(){
+        if(falseClauses.size() == 0)
+            return null;
+        int index = random.nextInt(falseClauses.size());
+        return falseClauses.get(index);
+    }
+
+
+    private int pickVar(Clause clause){
+        int max = Integer.MIN_VALUE;
+        int var = 0;
+
+        for(Integer literal: clause.getLiterals()){
+            int makeX = 0;
+            int breakX = 0;
+//            System.out.println(literal);
+            for(Clause c: clausesContainingLiteralMap.get(literal)){
+                if (c.getNumSatisfiedLiterals() == 0){
+                    makeX++;
+                }
+            }
+            for(Clause c: clausesContainingLiteralMap.get(literal * -1)){
+                if(c.getNumSatisfiedLiterals() == 1){
+                    breakX++;
+                }
+            }
+            int temp = makeX - breakX;
+            if(max < temp){
+                max = temp;
+                var = literal;
+            }
+        }
+        return var;
+
     }
 
 }
