@@ -37,6 +37,33 @@ public class Clause {
         numSatisfiedLiterals = counter;
     }
 
+    public void flipAt(int var){
+        if(literals.contains(var)){
+            int index = literals.indexOf(var);
+            int curAssignment = assignment.get(index);
+            if(curAssignment == 1){
+                assignment.set(index, 0);
+                numSatisfiedLiterals--;
+            }
+            else{
+                assignment.set(index, 1);
+                numSatisfiedLiterals++;
+            }
+        }
+        if(literals.contains(-1 * var)){
+            int index = literals.indexOf(-1 * var);
+            int curAssignment = assignment.get(index);
+            if(curAssignment == 1){
+                assignment.set(index, 0);
+                numSatisfiedLiterals--;
+            }
+            else{
+                assignment.set(index, 1);
+                numSatisfiedLiterals++;
+            }
+        }
+    }
+
     public int getNumSatisfiedLiterals(){
         return numSatisfiedLiterals;
     }
