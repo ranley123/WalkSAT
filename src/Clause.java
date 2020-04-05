@@ -17,13 +17,7 @@ public class Clause {
     public void updateAssignment(HashMap<Integer, Integer> assignmentMap){
         assignment = new ArrayList<>();
         for(int i = 0 ; i < literals.size(); i++){
-            int var = literals.get(i);
-            if(assignmentMap.containsKey(var)){
-                assignment.add(assignmentMap.get(var));
-            }
-            else{
-                assignment.add(assignmentMap.get(var * -1) == 1? 0: 1);
-            }
+            assignment.add(assignmentMap.get(literals.get(i)));
         }
         updateNumSatisfiedLiterals();
     }
@@ -38,8 +32,9 @@ public class Clause {
     }
 
     public void flipAt(int var){
+        int index = 0;
         if(literals.contains(var)){
-            int index = literals.indexOf(var);
+            index = literals.indexOf(var);
             int curAssignment = assignment.get(index);
             if(curAssignment == 1){
                 assignment.set(index, 0);
@@ -50,8 +45,8 @@ public class Clause {
                 numSatisfiedLiterals++;
             }
         }
-        if(literals.contains(-1 * var)){
-            int index = literals.indexOf(-1 * var);
+        else if(literals.contains(-1 * var)){
+            index = literals.indexOf(-1 * var);
             int curAssignment = assignment.get(index);
             if(curAssignment == 1){
                 assignment.set(index, 0);
@@ -62,6 +57,8 @@ public class Clause {
                 numSatisfiedLiterals++;
             }
         }
+
+//        updateNumSatisfiedLiterals();
     }
 
     public int getNumSatisfiedLiterals(){
@@ -72,7 +69,6 @@ public class Clause {
         literals.add(literal);
     }
 
-
     public ArrayList<Integer> getLiterals(){
         return literals;
     }
@@ -80,4 +76,13 @@ public class Clause {
     public boolean hasLiteral(int literal){
         return literals.contains(literal);
     }
+
+    public void print(){
+        StringBuilder sb = new StringBuilder();
+        for(Integer i: this.getLiterals()){
+            sb.append(i + ", ");
+        }
+        System.out.println(sb.toString());
+    }
+
 }

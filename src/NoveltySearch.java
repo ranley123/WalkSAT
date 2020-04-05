@@ -1,10 +1,14 @@
+import com.sun.source.tree.AssignmentTree;
+
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Random;
 
-public class Main {
+public class NoveltySearch {
     private int numVar = 0;
     private int numClause = 0;
     private boolean initialised = false;
@@ -16,18 +20,21 @@ public class Main {
     private HashMap<Integer, Integer> assignmentMap;
     private ArrayList<Clause> falseClauses;
     private HashMap<Integer, ArrayList<Clause>> clausesContainingLiteralMap;
+    private ArrayList<ArrayList<Integer>> phenotypeLib;
 
     public static void main(String [] args){
-        Main walkSAT = new Main();
-        walkSAT.run();
+        NoveltySearch noveltySearch = new NoveltySearch();
+        noveltySearch.run();
     }
 
-    public Main(){
+    public NoveltySearch(){
         // initialise variables
         clauses = new ArrayList<>();
         falseClauses = new ArrayList<>();
         assignmentMap = new HashMap<>();
         clausesContainingLiteralMap = new HashMap<>();
+        phenotypeLib = new ArrayList<>();
+
         p = 0.2;
         random = new Random();
     }
@@ -64,12 +71,11 @@ public class Main {
         }
         System.out.println("Flips: " + flipTimes);
 
-        System.out.println("Solution: " + assignmentMap);
+        System.out.println("Solution: " + assignmentMap.values());
 
-//        for(Clause clause: clauses){
-//            System.out.println(clause.assignment);
-//        }
-        System.out.println("Verifier: " + verifier(assignmentMap, clauses));
+        for(Clause clause: clauses){
+            System.out.println(clause.assignment);
+        }
     }
 
 
@@ -85,10 +91,7 @@ public class Main {
 
             // read line by line
             while((line = reader.readLine()) != null){
-                if(line.length() == 0)
-                    continue;
-                line = line.strip();
-                String[] words = line.split("\\s+");
+                String[] words = line.split(" ");
                 if(words[0].equals("c")){ // extra information so don't need to be processed
                     continue;
                 }
@@ -122,9 +125,6 @@ public class Main {
         for(int i = 1; i < numVar + 1; i++){
             int temp = random.nextInt(2);
             assignmentMap.put(i, temp);
-        }
-        for(int i = -1 * numVar; i < 0; i++){
-            assignmentMap.put(i, assignmentMap.get(-1 * i) == 1? 0 : 1);
         }
     }
 
@@ -190,11 +190,8 @@ public class Main {
      * @param var
      */
     private void flip(int var){
-        long startTime = System.nanoTime();
-
         flipTimes++;
-        assignmentMap.put(var, assignmentMap.get(var) == 1? 0 : 1);
-        assignmentMap.put(var * -1, assignmentMap.get(var * -1) == 1? 0 : 1);
+        assignmentMap.put(Math.abs(var), assignmentMap.get(Math.abs(var)) == 1? 0 : 1);
 
 //        initialiseClauseAssignment();
         for(Clause clause: clauses){
@@ -203,11 +200,6 @@ public class Main {
 
         updateFalseClauses();
         initialiseClausesContainingLiteral();
-
-        long endTime   = System.nanoTime();
-        long totalTime = endTime - startTime;
-        long frequency = 1000000000/totalTime;
-        System.out.println("flip frequency: " + frequency);
     }
 
     private Clause getRandomFalseClause(){
@@ -217,50 +209,82 @@ public class Main {
         return falseClauses.get(index);
     }
 
-
     private int pickVar(Clause clause){
-        int maxDiff = Integer.MIN_VALUE;
         int var = 0;
 
         for(Integer literal: clause.getLiterals()){
-            int makeX = 0;
-            int breakX = 0;
-//            System.out.println(literal);
-            for(Clause c: clausesContainingLiteralMap.get(literal)){
-                if (c.getNumSatisfiedLiterals() == 0){
-                    makeX++;
-                }
-            }
-            for(Clause c: clausesContainingLiteralMap.get(literal * -1)){
-                if(c.getNumSatisfiedLiterals() == 1){
-                    breakX++;
-                }
-            }
-            int diff = makeX - breakX;
-            if(maxDiff < diff){
-                maxDiff = diff;
-                var = literal;
-            }
+            ArrayList<Integer> p = getPhenotype(literal);
+            int curNovelty = getNovelty(phenotypeLib, p);
+            int curFitness = getFitness(p);
+
         }
         return var;
 
     }
 
-    private boolean verifier(HashMap<Integer, Integer> solution, ArrayList<Clause> clauses){
-        for(Clause clause: clauses){
-            if(is_satisfied(solution, clause) == false){
-                return false;
+    private int getFitness(ArrayList<Integer> phenotype){
+        int counter = 0;
+        for(Integer i: phenotype){
+            if(i == 1){
+                counter++;
             }
         }
-        return true;
+        return counter;
     }
 
-    private boolean is_satisfied(HashMap<Integer, Integer> solution, Clause clause){
-        for(Integer i: clause.getLiterals()){
-            if(solution.get(i) == 1)
-                return true;
+    private ArrayList<Integer> getPhenotype(int var){
+        ArrayList<Integer> res = new ArrayList<>();
+        for(Clause clause: clauses){
+            int target = 0;
+            if(clause.getLiterals().contains(var)){
+                target = var;
+            }
+            else if(clause.getLiterals().contains(-1 * var)){
+                target = -1 * var;
+            }
+
+            if(clause.assignment.get(clause.literals.indexOf(target)) == 1){
+                if(clause.getNumSatisfiedLiterals() - 1 <= 0){
+                    res.add(0);
+                }
+                else{
+                    res.add(1);
+                }
+            }
+            else{
+                res.add(1);
+            }
         }
-        return false;
+
+        return res;
     }
+
+    private int getNovelty(ArrayList<ArrayList<Integer>> phenotypeLib, ArrayList<Integer> p){
+        int novelty = 1;
+
+        for(ArrayList<Integer> phenotype: phenotypeLib){
+            novelty *= getHammingDistance(phenotype, p);
+        }
+        return novelty;
+    }
+
+    private int getHammingDistance(ArrayList<Integer> p1, ArrayList<Integer> p2){
+        int dist = 0;
+        char[] s1 = p1.toString().toCharArray();
+        char[] s2 = p2.toString().toCharArray();
+        StringBuilder sb = new StringBuilder();
+
+        for(int i = 0; i < s1.length; i++){
+            sb.append((s1[i] ^ s2[i]));
+        }
+        char[] res = sb.toString().toCharArray();
+        for(char c: res){
+            if(c == '1'){
+                dist++;
+            }
+        }
+        return dist;
+    }
+
 
 }
