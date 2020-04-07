@@ -1,7 +1,4 @@
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 
 public class Main {
@@ -11,6 +8,7 @@ public class Main {
     private int flipTimes = 0;
     private double p;
     private Random random;
+    private long avg_flip_frequency = 0;
 
     private ArrayList<Clause> clauses;
     private HashMap<Integer, Integer> assignmentMap;
@@ -34,7 +32,7 @@ public class Main {
 
     private void run(){
         // read input CNF
-        readFile("./src/input.txt");
+        readFile("input.txt");
 
         initialiseAssignmentMap();
         initialiseClauseAssignment();
@@ -63,6 +61,7 @@ public class Main {
             flip(var);
         }
         System.out.println("Flips: " + flipTimes);
+        System.out.println("Average flip frequency: " + avg_flip_frequency/flipTimes);
 
         System.out.println("Solution: " + assignmentMap);
 
@@ -70,7 +69,9 @@ public class Main {
 //            System.out.println(clause.assignment);
 //        }
         System.out.println("Verifier: " + verifier(assignmentMap, clauses));
+
     }
+
 
 
     /**
@@ -79,7 +80,8 @@ public class Main {
      */
     private void readFile(String filename){
         try{
-            BufferedReader reader = new BufferedReader(new FileReader(filename));
+            InputStream in = getClass().getResourceAsStream(filename);
+            BufferedReader reader = new BufferedReader(new InputStreamReader(in));
             String line = "";
             int index = 0;
 
@@ -208,6 +210,7 @@ public class Main {
         long totalTime = endTime - startTime;
         long frequency = 1000000000/totalTime;
         System.out.println("flip frequency: " + frequency);
+        avg_flip_frequency += frequency;
     }
 
     private Clause getRandomFalseClause(){
