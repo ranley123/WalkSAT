@@ -4,7 +4,6 @@ import java.util.*;
 public class Main {
     private int numVar = 0;
     private int numClause = 0;
-    private boolean initialised = false;
     private int flipTimes = 0;
     private double p;
     private Random random;
@@ -32,7 +31,10 @@ public class Main {
 
     private void run(){
         // read input CNF
-        readFile("input.txt");
+        Helper.readFile("input.txt");
+        numVar = Helper.numVar;
+        numClause = Helper.numClause;
+        clauses = Helper.clauses;
 
         initialiseAssignmentMap();
         initialiseClauseAssignment();
@@ -68,52 +70,8 @@ public class Main {
 //        for(Clause clause: clauses){
 //            System.out.println(clause.assignment);
 //        }
-        System.out.println("Verifier: " + verifier(assignmentMap, clauses));
+        System.out.println("Verifier: " + Helper.verifier(assignmentMap, clauses));
 
-    }
-
-
-
-    /**
-     * reads input file which contains CNF formula
-     * @param filename
-     */
-    private void readFile(String filename){
-        try{
-            InputStream in = getClass().getResourceAsStream(filename);
-            BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-            String line = "";
-            int index = 0;
-
-            // read line by line
-            while((line = reader.readLine()) != null){
-                if(line.length() == 0)
-                    continue;
-                line = line.strip();
-                String[] words = line.split("\\s+");
-                if(words[0].equals("c")){ // extra information so don't need to be processed
-                    continue;
-                }
-                else if(!words[0].equals("c") && !initialised){
-                    initialised = true;
-                    numVar = Integer.parseInt(words[2]);
-                    numClause = Integer.parseInt(words[3]);
-                }
-                else{ // construct a new clause
-                    Clause curClause = new Clause(index++);
-                    for(String word: words){
-                        int num = Integer.parseInt(word);
-                        if(num != 0)
-                            curClause.addLiteral(num);
-                    }
-                    clauses.add(curClause);
-                }
-            }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     /**
@@ -178,11 +136,6 @@ public class Main {
      * @return complete
      */
     private boolean completed(){
-//        for(Clause clause: clauses){
-//            if(clause.getNumSatisfiedLiterals() == 0)
-//                return false;
-//        }
-//        return true;
         return falseClauses.size() == 0;
     }
 
@@ -247,23 +200,6 @@ public class Main {
         }
         return var;
 
-    }
-
-    private boolean verifier(HashMap<Integer, Integer> solution, ArrayList<Clause> clauses){
-        for(Clause clause: clauses){
-            if(is_satisfied(solution, clause) == false){
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private boolean is_satisfied(HashMap<Integer, Integer> solution, Clause clause){
-        for(Integer i: clause.getLiterals()){
-            if(solution.get(i) == 1)
-                return true;
-        }
-        return false;
     }
 
 }

@@ -1,9 +1,4 @@
-import com.sun.source.tree.AssignmentTree;
-
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
@@ -11,7 +6,6 @@ import java.util.Random;
 public class NoveltySearch {
     private int numVar = 0;
     private int numClause = 0;
-    private boolean initialised = false;
     private int flipTimes = 0;
     private double p;
     private Random random;
@@ -41,20 +35,16 @@ public class NoveltySearch {
 
     private void run(){
         // read input CNF
-        readFile("./src/input.txt");
+        Helper.readFile("input.txt");
+        numVar = Helper.numVar;
+        numClause = Helper.numClause;
+        clauses = Helper.clauses;
 
         initialiseAssignmentMap();
         initialiseClauseAssignment();
 
         initialiseClausesContainingLiteral();
         updateFalseClauses();
-
-//        System.out.println(assignmentMap);
-//        System.out.println(falseClauses);
-//        System.out.println(clausesContainingLiteralMap);x
-//        for(Clause clause: clauses){
-//            System.out.println(clause.assignment);
-//        }
 
         while(!completed()){
             Clause curClause = getRandomFalseClause();
@@ -67,54 +57,17 @@ public class NoveltySearch {
             else{
                 var = random.nextInt(numVar) + 1;
             }
+            ArrayList<Integer> p = getPhenotype(var);
+            phenotypeLib.add(p);
             flip(var);
         }
         System.out.println("Flips: " + flipTimes);
 
-        System.out.println("Solution: " + assignmentMap.values());
-
-        for(Clause clause: clauses){
-            System.out.println(clause.assignment);
-        }
-    }
-
-
-    /**
-     * reads input file which contains CNF formula
-     * @param filename
-     */
-    private void readFile(String filename){
-        try{
-            BufferedReader reader = new BufferedReader(new FileReader(filename));
-            String line = "";
-            int index = 0;
-
-            // read line by line
-            while((line = reader.readLine()) != null){
-                String[] words = line.split(" ");
-                if(words[0].equals("c")){ // extra information so don't need to be processed
-                    continue;
-                }
-                else if(!words[0].equals("c") && !initialised){
-                    initialised = true;
-                    numVar = Integer.parseInt(words[2]);
-                    numClause = Integer.parseInt(words[3]);
-                }
-                else{ // construct a new clause
-                    Clause curClause = new Clause(index++);
-                    for(String word: words){
-                        int num = Integer.parseInt(word);
-                        if(num != 0)
-                            curClause.addLiteral(num);
-                    }
-                    clauses.add(curClause);
-                }
-            }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        System.out.println("Solution: " + assignmentMap);
+        System.out.println("Verifier: " + Helper.verifier(assignmentMap, clauses));
+//        for(Clause clause: clauses){
+//            System.out.println(clause.assignment);
+//        }
     }
 
     /**
@@ -125,6 +78,9 @@ public class NoveltySearch {
         for(int i = 1; i < numVar + 1; i++){
             int temp = random.nextInt(2);
             assignmentMap.put(i, temp);
+        }
+        for(int i = -1 * numVar; i < 0; i++){
+            assignmentMap.put(i, assignmentMap.get(-1 * i) == 1? 0 : 1);
         }
     }
 
@@ -191,7 +147,8 @@ public class NoveltySearch {
      */
     private void flip(int var){
         flipTimes++;
-        assignmentMap.put(Math.abs(var), assignmentMap.get(Math.abs(var)) == 1? 0 : 1);
+        assignmentMap.put(var, assignmentMap.get(var) == 1? 0 : 1);
+        assignmentMap.put(var * -1, assignmentMap.get(var * -1) == 1? 0 : 1);
 
 //        initialiseClauseAssignment();
         for(Clause clause: clauses){
@@ -210,16 +167,26 @@ public class NoveltySearch {
     }
 
     private int pickVar(Clause clause){
-        int var = 0;
+        ArrayList<Integer> literals = clause.getLiterals();
+        int maxNovelty = 0;
+        int maxNoveltyIndex = -1;
+        int maxFitness = 0;
+        int maxFitnessIndex = -1;
 
-        for(Integer literal: clause.getLiterals()){
-            ArrayList<Integer> p = getPhenotype(literal);
+        for(int i = 0; i < literals.size(); i++){
+            ArrayList<Integer> p = getPhenotype(literals.get(i));
             int curNovelty = getNovelty(phenotypeLib, p);
             int curFitness = getFitness(p);
-
+            if(curNovelty > maxNovelty){
+                maxNovelty = curNovelty;
+                maxNoveltyIndex = i;
+            }
+            if(curFitness > maxFitness){
+                maxFitness = curFitness;
+                maxFitnessIndex = i;
+            }
         }
-        return var;
-
+        return literals.get(maxFitnessIndex);
     }
 
     private int getFitness(ArrayList<Integer> phenotype){
@@ -233,6 +200,7 @@ public class NoveltySearch {
     }
 
     private ArrayList<Integer> getPhenotype(int var){
+        // result assignment
         ArrayList<Integer> res = new ArrayList<>();
         for(Clause clause: clauses){
             int target = 0;
@@ -242,9 +210,13 @@ public class NoveltySearch {
             else if(clause.getLiterals().contains(-1 * var)){
                 target = -1 * var;
             }
+            else{
+                res.add(clause.numSatisfiedLiterals == 0? 0 : 1);
+                continue;
+            }
 
             if(clause.assignment.get(clause.literals.indexOf(target)) == 1){
-                if(clause.getNumSatisfiedLiterals() - 1 <= 0){
+                if(clause.getNumSatisfiedLiterals() == 1){
                     res.add(0);
                 }
                 else{
@@ -261,7 +233,8 @@ public class NoveltySearch {
 
     private int getNovelty(ArrayList<ArrayList<Integer>> phenotypeLib, ArrayList<Integer> p){
         int novelty = 1;
-
+        if(phenotypeLib.size() == 0)
+            return Integer.MAX_VALUE;
         for(ArrayList<Integer> phenotype: phenotypeLib){
             novelty *= getHammingDistance(phenotype, p);
         }
@@ -270,18 +243,10 @@ public class NoveltySearch {
 
     private int getHammingDistance(ArrayList<Integer> p1, ArrayList<Integer> p2){
         int dist = 0;
-        char[] s1 = p1.toString().toCharArray();
-        char[] s2 = p2.toString().toCharArray();
-        StringBuilder sb = new StringBuilder();
-
-        for(int i = 0; i < s1.length; i++){
-            sb.append((s1[i] ^ s2[i]));
-        }
-        char[] res = sb.toString().toCharArray();
-        for(char c: res){
-            if(c == '1'){
+        for(int i = 0; i < p1.size(); i++){
+            int temp = p1.get(i) ^ p2.get(i);
+            if (temp == 1)
                 dist++;
-            }
         }
         return dist;
     }
