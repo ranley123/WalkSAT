@@ -1,6 +1,8 @@
 import java.io.*;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Random;
 
 public class Helper {
     public static int numVar = 0;
@@ -59,5 +61,56 @@ public class Helper {
                 return true;
         }
         return false;
+    }
+
+    public static void initialiseAssignmentMap(HashMap<Integer, Integer> assignmentMap, int numVar){
+        Random random = new Random();
+        for(int i = 1; i < numVar + 1; i++){
+            int temp = random.nextInt(2);
+            assignmentMap.put(i, temp);
+        }
+        for(int i = -1 * numVar; i < 0; i++){
+            assignmentMap.put(i, assignmentMap.get(-1 * i) == 1? 0 : 1);
+        }
+    }
+
+    public static void initialiseClauseAssignment(ArrayList<Clause> clauses, HashMap<Integer, Integer>assignmentMap){
+        for(Clause clause: clauses){
+            clause.updateAssignment(assignmentMap);
+        }
+    }
+
+    public static void initialiseClausesContainingLiteral(int numVar, ArrayList<Clause> clauses, HashMap<Integer, ArrayList<Clause>> clausesContainingLiteralMap){
+        for(int i = -1 * numVar; i < numVar + 1; i++){
+            if(i == 0)
+                continue;
+
+            ArrayList<Clause> temp = new ArrayList<>();
+            for(Clause clause: clauses){
+                if (clause.hasLiteral(i)){
+                    temp.add(clause);
+                }
+            }
+            clausesContainingLiteralMap.put(i, temp);
+        }
+    }
+
+    public static ArrayList<Clause> updateFalseClauses(ArrayList<Clause> clauses){
+        ArrayList<Clause> falseClauses = new ArrayList<>();
+        for(Clause clause: clauses){
+//            System.out.println(clause.assignment);
+            if(clause.getNumSatisfiedLiterals() == 0){
+                falseClauses.add(clause);
+            }
+        }
+        return falseClauses;
+    }
+
+    public static Clause getRandomFalseClause(ArrayList<Clause> falseClauses){
+        Random random = new Random();
+        if(falseClauses.size() == 0)
+            return null;
+        int index = random.nextInt(falseClauses.size());
+        return falseClauses.get(index);
     }
 }

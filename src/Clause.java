@@ -85,4 +85,14 @@ public class Clause {
         System.out.println(sb.toString());
     }
 
+    public int getVarAssignment(int var){
+        if(literals.contains(var)){
+            int index = literals.indexOf(var);
+            return assignment.get(index);
+        }
+        else{
+            return -1;
+        }
+    }
+
 }

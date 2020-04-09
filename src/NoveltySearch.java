@@ -1,4 +1,3 @@
-import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
@@ -40,11 +39,11 @@ public class NoveltySearch {
         numClause = Helper.numClause;
         clauses = Helper.clauses;
 
-        initialiseAssignmentMap();
-        initialiseClauseAssignment();
+        Helper.initialiseAssignmentMap(assignmentMap, numVar);
+        Helper.initialiseClauseAssignment(clauses, assignmentMap);
 
-        initialiseClausesContainingLiteral();
-        updateFalseClauses();
+        Helper.initialiseClausesContainingLiteral(numVar, clauses, clausesContainingLiteralMap);
+        falseClauses = Helper.updateFalseClauses(clauses);
 
         while(!completed()){
             Clause curClause = getRandomFalseClause();
@@ -70,62 +69,6 @@ public class NoveltySearch {
 //        }
     }
 
-    /**
-     * allocates a random truth assignment to literal
-     */
-    private void initialiseAssignmentMap(){
-        Random random = new Random();
-        for(int i = 1; i < numVar + 1; i++){
-            int temp = random.nextInt(2);
-            assignmentMap.put(i, temp);
-        }
-        for(int i = -1 * numVar; i < 0; i++){
-            assignmentMap.put(i, assignmentMap.get(-1 * i) == 1? 0 : 1);
-        }
-    }
-
-    /**
-     * initialises clause assignments based on the current assignmentMap
-     */
-    private void initialiseClauseAssignment(){
-        for(Clause clause: clauses){
-            clause.updateAssignment(assignmentMap);
-        }
-    }
-
-    /**
-     * gives the list of clauses that contains each literal.
-     * lists for x and -x are separated
-     */
-    private void initialiseClausesContainingLiteral(){
-        for(int i = -1 * numVar; i < numVar + 1; i++){
-            if(i == 0)
-                continue;
-
-            ArrayList<Clause> temp = new ArrayList<>();
-            for(Clause clause: clauses){
-                if (clause.hasLiteral(i)){
-                    temp.add(clause);
-                }
-            }
-            clausesContainingLiteralMap.put(i, temp);
-        }
-    }
-
-    /**
-     *
-     */
-    private void updateFalseClauses(){
-        falseClauses = new ArrayList<>();
-
-        for(Clause clause: clauses){
-//            System.out.println(clause.assignment);
-            if(clause.getNumSatisfiedLiterals() == 0){
-                falseClauses.add(clause);
-            }
-
-        }
-    }
 
     /**
      * checks if all clauses are satisfied
@@ -155,8 +98,8 @@ public class NoveltySearch {
             clause.flipAt(var);
         }
 
-        updateFalseClauses();
-        initialiseClausesContainingLiteral();
+        falseClauses = Helper.updateFalseClauses(clauses);
+        Helper.initialiseClausesContainingLiteral(numVar, clauses, clausesContainingLiteralMap);
     }
 
     private Clause getRandomFalseClause(){

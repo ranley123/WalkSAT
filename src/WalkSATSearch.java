@@ -1,7 +1,6 @@
-import java.io.*;
 import java.util.*;
 
-public class Main {
+public class WalkSATSearch {
     private int numVar = 0;
     private int numClause = 0;
     private int flipTimes = 0;
@@ -15,11 +14,11 @@ public class Main {
     private HashMap<Integer, ArrayList<Clause>> clausesContainingLiteralMap;
 
     public static void main(String [] args){
-        Main walkSAT = new Main();
+        WalkSATSearch walkSAT = new WalkSATSearch();
         walkSAT.run();
     }
 
-    public Main(){
+    public WalkSATSearch(){
         // initialise variables
         clauses = new ArrayList<>();
         falseClauses = new ArrayList<>();
@@ -36,11 +35,11 @@ public class Main {
         numClause = Helper.numClause;
         clauses = Helper.clauses;
 
-        initialiseAssignmentMap();
-        initialiseClauseAssignment();
+        Helper.initialiseAssignmentMap(assignmentMap, numVar);
+        Helper.initialiseClauseAssignment(clauses, assignmentMap);
 
-        initialiseClausesContainingLiteral();
-        updateFalseClauses();
+        Helper.initialiseClausesContainingLiteral(numVar, clauses, clausesContainingLiteralMap);
+        falseClauses = Helper.updateFalseClauses(clauses);
 
 //        System.out.println(assignmentMap);
 //        System.out.println(falseClauses);
@@ -50,7 +49,7 @@ public class Main {
 //        }
 
         while(!completed()){
-            Clause curClause = getRandomFalseClause();
+            Clause curClause = Helper.getRandomFalseClause(falseClauses);
             double r = random.nextDouble();
             int var;
 
@@ -72,63 +71,6 @@ public class Main {
 //        }
         System.out.println("Verifier: " + Helper.verifier(assignmentMap, clauses));
 
-    }
-
-    /**
-     * allocates a random truth assignment to literal
-     */
-    private void initialiseAssignmentMap(){
-        Random random = new Random();
-        for(int i = 1; i < numVar + 1; i++){
-            int temp = random.nextInt(2);
-            assignmentMap.put(i, temp);
-        }
-        for(int i = -1 * numVar; i < 0; i++){
-            assignmentMap.put(i, assignmentMap.get(-1 * i) == 1? 0 : 1);
-        }
-    }
-
-    /**
-     * initialises clause assignments based on the current assignmentMap
-     */
-    private void initialiseClauseAssignment(){
-        for(Clause clause: clauses){
-            clause.updateAssignment(assignmentMap);
-        }
-    }
-
-    /**
-     * gives the list of clauses that contains each literal.
-     * lists for x and -x are separated
-     */
-    private void initialiseClausesContainingLiteral(){
-        for(int i = -1 * numVar; i < numVar + 1; i++){
-            if(i == 0)
-                continue;
-
-            ArrayList<Clause> temp = new ArrayList<>();
-            for(Clause clause: clauses){
-                if (clause.hasLiteral(i)){
-                    temp.add(clause);
-                }
-            }
-            clausesContainingLiteralMap.put(i, temp);
-        }
-    }
-
-    /**
-     *
-     */
-    private void updateFalseClauses(){
-        falseClauses = new ArrayList<>();
-
-        for(Clause clause: clauses){
-//            System.out.println(clause.assignment);
-            if(clause.getNumSatisfiedLiterals() == 0){
-                falseClauses.add(clause);
-            }
-
-        }
     }
 
     /**
@@ -156,8 +98,9 @@ public class Main {
             clause.flipAt(var);
         }
 
-        updateFalseClauses();
-        initialiseClausesContainingLiteral();
+
+        falseClauses = Helper.updateFalseClauses(clauses);
+        Helper.initialiseClausesContainingLiteral(numVar, clauses, clausesContainingLiteralMap);
 
         long endTime   = System.nanoTime();
         long totalTime = endTime - startTime;
@@ -165,14 +108,6 @@ public class Main {
         System.out.println("flip frequency: " + frequency);
         avg_flip_frequency += frequency;
     }
-
-    private Clause getRandomFalseClause(){
-        if(falseClauses.size() == 0)
-            return null;
-        int index = random.nextInt(falseClauses.size());
-        return falseClauses.get(index);
-    }
-
 
     private int pickVar(Clause clause){
         int maxDiff = Integer.MIN_VALUE;
