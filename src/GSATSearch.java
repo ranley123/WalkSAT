@@ -8,6 +8,8 @@ public class GSATSearch {
     private int flipTimes = 0;
     private Random random;
     private long avg_flip_frequency = 0;
+    private int MAX_STEPS = 1000;
+    double p = 0.2;
 
     private ArrayList<Clause> clauses;
     private HashMap<Integer, Integer> assignmentMap;
@@ -24,21 +26,44 @@ public class GSATSearch {
         falseClauses = new ArrayList<>();
         assignmentMap = new HashMap<>();
         clausesContainingLiteralMap = new HashMap<>();
-        random = new Random();
     }
 
-    private void run(){
+    public int getNumVar(){
+        return numVar;
+    }
+
+    public int getFlipTimes(){
+        return flipTimes;
+    }
+
+    public HashMap<Integer, Integer> getSolution(){
+        return assignmentMap;
+    }
+
+    public void initialiseForEval(HashMap<Integer, Integer> assignmentMap){
+        this.assignmentMap = assignmentMap;
+        Helper.initialiseClauseAssignment(clauses, assignmentMap);
+
+        Helper.initialiseClausesContainingLiteral(numVar, clauses, clausesContainingLiteralMap);
+        falseClauses = Helper.updateFalseClauses(clauses);
+    }
+
+    public void readFile(){
         Helper.readFile("input.txt");
         numVar = Helper.numVar;
         numClause = Helper.numClause;
         clauses = Helper.clauses;
+    }
 
+    public void initialise(){
         Helper.initialiseAssignmentMap(assignmentMap, numVar);
         Helper.initialiseClauseAssignment(clauses, assignmentMap);
 
         Helper.initialiseClausesContainingLiteral(numVar, clauses, clausesContainingLiteralMap);
         falseClauses = Helper.updateFalseClauses(clauses);
+    }
 
+    public void search(){
         while(!completed()){
             int var = pickVar();
             flip(var);
@@ -54,10 +79,31 @@ public class GSATSearch {
         System.out.println("Verifier: " + Helper.verifier(assignmentMap, clauses));
     }
 
+    public void run(){
+        readFile();
+        initialise();
+        search();
+//        System.out.println(assignmentMap);
+//        System.out.println(falseClauses);
+//        System.out.println(clausesContainingLiteralMap);x
+//        for(Clause clause: clauses){
+//            System.out.println(clause.assignment);
+//        }
+    }
+
+    /**
+     * checks if all clauses are satisfied
+     * @return complete
+     */
     private boolean completed(){
         return falseClauses.size() == 0;
     }
 
+
+    /**
+     *
+     * @param var
+     */
     private void flip(int var){
         long startTime = System.nanoTime();
 
@@ -70,13 +116,14 @@ public class GSATSearch {
             clause.flipAt(var);
         }
 
+
         falseClauses = Helper.updateFalseClauses(clauses);
         Helper.initialiseClausesContainingLiteral(numVar, clauses, clausesContainingLiteralMap);
 
         long endTime   = System.nanoTime();
         long totalTime = endTime - startTime;
         long frequency = 1000000000/totalTime;
-        System.out.println("flip frequency: " + frequency);
+//        System.out.println("flip frequency: " + frequency);
         avg_flip_frequency += frequency;
     }
 
@@ -85,31 +132,29 @@ public class GSATSearch {
         int var = 0;
 
         for(int literal = 1; literal < numVar + 1; literal++){
-            int before = 0;
-            int after = 0;
+            int makeX = 0;
+            int breakX = 0;
 //            System.out.println(literal);
             for(Clause c: clausesContainingLiteralMap.get(literal)){
                 if (c.getNumSatisfiedLiterals() == 0){
-                    after++;
-                }
-                else if(c.getVarAssignment(literal) ==  1 && c.getNumSatisfiedLiterals() == 1){
-                    before++;
+                    makeX++;
                 }
             }
             for(Clause c: clausesContainingLiteralMap.get(literal * -1)){
-                if (c.getNumSatisfiedLiterals() == 0){
-                    after++;
-                }
-                else if(c.getVarAssignment(literal * -1) ==  1 && c.getNumSatisfiedLiterals() == 1){
-                    before++;
+                if(c.getNumSatisfiedLiterals() == 1){
+                    breakX++;
                 }
             }
-            int diff = after - before;
+            int diff = makeX - breakX;
             if(maxDiff < diff){
                 maxDiff = diff;
                 var = literal;
             }
+//            System.out.println("literal: " + literal);
+//            System.out.println("score: " + diff);
         }
+        System.out.println("var: " + var);
+//        System.out.println("score: " + diff);
         return var;
 
     }

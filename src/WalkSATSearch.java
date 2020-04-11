@@ -4,7 +4,7 @@ public class WalkSATSearch {
     private int numVar = 0;
     private int numClause = 0;
     private int flipTimes = 0;
-    private double p;
+    double p;
     private Random random;
     private long avg_flip_frequency = 0;
 
@@ -24,30 +24,46 @@ public class WalkSATSearch {
         falseClauses = new ArrayList<>();
         assignmentMap = new HashMap<>();
         clausesContainingLiteralMap = new HashMap<>();
-        p = 0.2;
+        p = 0.1;
         random = new Random();
     }
 
-    private void run(){
-        // read input CNF
+    public int getNumVar(){
+        return numVar;
+    }
+
+    public int getFlipTimes(){
+        return flipTimes;
+    }
+
+    public HashMap<Integer, Integer> getSolution(){
+        return assignmentMap;
+    }
+
+    public void initialiseForEval(HashMap<Integer, Integer> assignmentMap){
+        this.assignmentMap = assignmentMap;
+        Helper.initialiseClauseAssignment(clauses, assignmentMap);
+
+        Helper.initialiseClausesContainingLiteral(numVar, clauses, clausesContainingLiteralMap);
+        falseClauses = Helper.updateFalseClauses(clauses);
+    }
+
+    public void readFile(){
         Helper.readFile("input.txt");
         numVar = Helper.numVar;
         numClause = Helper.numClause;
         clauses = Helper.clauses;
+    }
 
+    public void initialise(){
         Helper.initialiseAssignmentMap(assignmentMap, numVar);
         Helper.initialiseClauseAssignment(clauses, assignmentMap);
 
         Helper.initialiseClausesContainingLiteral(numVar, clauses, clausesContainingLiteralMap);
         falseClauses = Helper.updateFalseClauses(clauses);
+    }
 
-//        System.out.println(assignmentMap);
-//        System.out.println(falseClauses);
-//        System.out.println(clausesContainingLiteralMap);x
-//        for(Clause clause: clauses){
-//            System.out.println(clause.assignment);
-//        }
-
+    public void search(){
         while(!completed()){
             Clause curClause = Helper.getRandomFalseClause(falseClauses);
             double r = random.nextDouble();
@@ -62,15 +78,27 @@ public class WalkSATSearch {
             flip(var);
         }
         System.out.println("Flips: " + flipTimes);
+//        System.out.println("p: " + p);
         System.out.println("Average flip frequency: " + avg_flip_frequency/flipTimes);
 
-        System.out.println("Solution: " + assignmentMap);
+//        System.out.println("Solution: " + assignmentMap);
 
 //        for(Clause clause: clauses){
 //            System.out.println(clause.assignment);
 //        }
-        System.out.println("Verifier: " + Helper.verifier(assignmentMap, clauses));
+//        System.out.println("Verifier: " + Helper.verifier(assignmentMap, clauses));
+    }
 
+    public void run(){
+        readFile();
+        initialise();
+        search();
+//        System.out.println(assignmentMap);
+//        System.out.println(falseClauses);
+//        System.out.println(clausesContainingLiteralMap);x
+//        for(Clause clause: clauses){
+//            System.out.println(clause.assignment);
+//        }
     }
 
     /**
@@ -105,7 +133,7 @@ public class WalkSATSearch {
         long endTime   = System.nanoTime();
         long totalTime = endTime - startTime;
         long frequency = 1000000000/totalTime;
-        System.out.println("flip frequency: " + frequency);
+//        System.out.println("flip frequency: " + frequency);
         avg_flip_frequency += frequency;
     }
 

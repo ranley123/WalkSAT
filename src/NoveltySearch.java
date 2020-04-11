@@ -8,6 +8,8 @@ public class NoveltySearch {
     private int flipTimes = 0;
     private double p;
     private Random random;
+    private long avg_flip_frequency = 0;
+
 
     private ArrayList<Clause> clauses;
     private HashMap<Integer, Integer> assignmentMap;
@@ -18,6 +20,10 @@ public class NoveltySearch {
     public static void main(String [] args){
         NoveltySearch noveltySearch = new NoveltySearch();
         noveltySearch.run();
+    }
+
+    public int getFlipTimes(){
+        return flipTimes;
     }
 
     public NoveltySearch(){
@@ -32,19 +38,30 @@ public class NoveltySearch {
         random = new Random();
     }
 
-    private void run(){
-        // read input CNF
+    public void initialiseForEval(HashMap<Integer, Integer> assignmentMap){
+        this.assignmentMap = assignmentMap;
+        Helper.initialiseClauseAssignment(clauses, assignmentMap);
+
+        Helper.initialiseClausesContainingLiteral(numVar, clauses, clausesContainingLiteralMap);
+        falseClauses = Helper.updateFalseClauses(clauses);
+    }
+
+    public void readFile(){
         Helper.readFile("input.txt");
         numVar = Helper.numVar;
         numClause = Helper.numClause;
         clauses = Helper.clauses;
+    }
 
+    public void initialise(){
         Helper.initialiseAssignmentMap(assignmentMap, numVar);
         Helper.initialiseClauseAssignment(clauses, assignmentMap);
 
         Helper.initialiseClausesContainingLiteral(numVar, clauses, clausesContainingLiteralMap);
         falseClauses = Helper.updateFalseClauses(clauses);
+    }
 
+    public void search(){
         while(!completed()){
             Clause curClause = getRandomFalseClause();
             double r = random.nextDouble();
@@ -60,13 +77,20 @@ public class NoveltySearch {
             phenotypeLib.add(p);
             flip(var);
         }
-        System.out.println("Flips: " + flipTimes);
 
+        System.out.println("Flips: " + flipTimes);
+        System.out.println("Average flip frequency: " + avg_flip_frequency/flipTimes);
         System.out.println("Solution: " + assignmentMap);
         System.out.println("Verifier: " + Helper.verifier(assignmentMap, clauses));
 //        for(Clause clause: clauses){
 //            System.out.println(clause.assignment);
 //        }
+    }
+
+    private void run(){
+        readFile();
+        initialise();
+        search();
     }
 
 
@@ -89,6 +113,8 @@ public class NoveltySearch {
      * @param var
      */
     private void flip(int var){
+        long startTime = System.nanoTime();
+
         flipTimes++;
         assignmentMap.put(var, assignmentMap.get(var) == 1? 0 : 1);
         assignmentMap.put(var * -1, assignmentMap.get(var * -1) == 1? 0 : 1);
@@ -100,6 +126,12 @@ public class NoveltySearch {
 
         falseClauses = Helper.updateFalseClauses(clauses);
         Helper.initialiseClausesContainingLiteral(numVar, clauses, clausesContainingLiteralMap);
+
+        long endTime   = System.nanoTime();
+        long totalTime = endTime - startTime;
+        long frequency = 1000000000/totalTime;
+//        System.out.println("flip frequency: " + frequency);
+        avg_flip_frequency += frequency;
     }
 
     private Clause getRandomFalseClause(){
@@ -111,6 +143,8 @@ public class NoveltySearch {
 
     private int pickVar(Clause clause){
         ArrayList<Integer> literals = clause.getLiterals();
+        ArrayList<Integer> maxNoveltyIndices = new ArrayList<>();
+        ArrayList<Integer> maxFitnessIndices = new ArrayList<>();
         int maxNovelty = 0;
         int maxNoveltyIndex = -1;
         int maxFitness = 0;
@@ -124,10 +158,30 @@ public class NoveltySearch {
                 maxNovelty = curNovelty;
                 maxNoveltyIndex = i;
             }
+            else if(curNovelty == maxNovelty){
+//                System.out.println("equal novelty");
+                maxNoveltyIndices.add(i);
+            }
             if(curFitness > maxFitness){
                 maxFitness = curFitness;
                 maxFitnessIndex = i;
             }
+            else if(curFitness == maxFitness){
+//                System.out.println("equal fitness");
+                maxFitnessIndices.add(i);
+            }
+        }
+        int index = -1;
+        for(Integer i: maxNoveltyIndices){
+            for(Integer j: maxFitnessIndices){
+                if(i == j) {
+                    index = i;
+                }
+            }
+        }
+        if(index >= 0){
+//            System.out.println("hi");
+            return literals.get(index);
         }
         return literals.get(maxFitnessIndex);
     }
