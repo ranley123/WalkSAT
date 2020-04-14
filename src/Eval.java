@@ -52,7 +52,7 @@ public class Eval {
             i++;
             StringBuilder sb = new StringBuilder();
 
-            WalkSATSearch walkSATSearch = new WalkSATSearch();
+            WalkSATSearch walkSATSearch = new WalkSATSearch("input.txt");
             GSATSearch gsatSearch = new GSATSearch();
             NoveltySearch noveltySearch = new NoveltySearch();
             HashMap<Integer, Integer> assignmentMap = new HashMap<>();
@@ -83,7 +83,7 @@ public class Eval {
         while(i < 20) {
 //                StringBuilder sb = new StringBuilder();
             double p = 0.1;
-            WalkSATSearch walkSATSearch = new WalkSATSearch();
+            WalkSATSearch walkSATSearch = new WalkSATSearch("input.txt");
             HashMap<Integer, Integer> assignmentMap = new HashMap<>();
             System.out.println("-----------WalkSAT Search-----------");
             walkSATSearch.readFile();
@@ -92,7 +92,7 @@ public class Eval {
             sb = new StringBuilder();
 
             while(p < 0.9){
-                walkSATSearch = new WalkSATSearch();
+                walkSATSearch = new WalkSATSearch("input.txt");
                 walkSATSearch.p = p;
                 System.out.println("p value: " + p);
                 walkSATSearch.readFile();

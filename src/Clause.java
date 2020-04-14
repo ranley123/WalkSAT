@@ -3,12 +3,10 @@ import java.util.HashMap;
 
 public class Clause {
     ArrayList<Integer> literals;
-    int id;
     int numSatisfiedLiterals;
     ArrayList<Integer> assignment;
 
-    public Clause(int id){
-        this.id = id;
+    public Clause(){
         literals = new ArrayList<>();
         assignment = new ArrayList<>();
         numSatisfiedLiterals = 0;

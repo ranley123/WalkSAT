@@ -159,7 +159,6 @@ public class NoveltySearch {
                 maxNoveltyIndex = i;
             }
             else if(curNovelty == maxNovelty){
-//                System.out.println("equal novelty");
                 maxNoveltyIndices.add(i);
             }
             if(curFitness > maxFitness){
