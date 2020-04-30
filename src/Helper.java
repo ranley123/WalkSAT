@@ -17,6 +17,7 @@ public class Helper {
             InputStream in = Helper.class.getResourceAsStream(filename);
             BufferedReader reader = new BufferedReader(new InputStreamReader(in));
             String line = "";
+            int index = 0;
 
             // read line by line
             while((line = reader.readLine()) != null){
@@ -24,7 +25,6 @@ public class Helper {
                     continue;
                 line = line.strip();
                 String[] words = line.split("\\s+");
-
                 if(words[0].equals("c")){ // extra information so don't need to be processed
                     continue;
                 }
@@ -33,7 +33,9 @@ public class Helper {
                     numClause = Integer.parseInt(words[3]);
                 }
                 else{ // construct a new clause
-                    Clause curClause = new Clause();
+                    if(words.length != 4)
+                        break;
+                    Clause curClause = new Clause(index++);
                     for(String word: words){
                         int num = Integer.parseInt(word);
                         if(num != 0)

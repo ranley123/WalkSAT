@@ -5,11 +5,17 @@ public class Clause {
     ArrayList<Integer> literals;
     int numSatisfiedLiterals;
     ArrayList<Integer> assignment;
+    private int id;
 
-    public Clause(){
+    public Clause(int id){
         literals = new ArrayList<>();
         assignment = new ArrayList<>();
         numSatisfiedLiterals = 0;
+        this.id = id;
+    }
+
+    public int getId(){
+        return id;
     }
 
     public void updateAssignment(HashMap<Integer, Integer> assignmentMap){
@@ -91,6 +97,18 @@ public class Clause {
         else{
             return -1;
         }
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) {
+            return true;
+        }
+        if (obj == null || obj.getClass() != this.getClass()) {
+            return false;
+        }
+        Clause clause = (Clause) obj;
+        return clause.getLiterals().equals(this.getLiterals());
     }
 
 }

@@ -8,6 +8,7 @@ public class WalkSATSearch {
     double p; // the p value for pick var
     private Random random;
     private long avg_flip_frequency = 0; // flip times per second
+    private long runningTime = 0;
 
     private ArrayList<Clause> clauses; // all clauses
     private HashMap<Integer, Integer> assignmentMap; // map literal to its truth value
@@ -36,6 +37,10 @@ public class WalkSATSearch {
 
     public int getNumVar(){
         return numVar;
+    }
+
+    public int getNumClause(){
+        return numClause;
     }
 
     public int getFlipTimes(){
@@ -100,14 +105,14 @@ public class WalkSATSearch {
         }
         System.out.println("Flips: " + flipTimes);
 //        System.out.println("p: " + p);
-        System.out.println("Average flip frequency: " + avg_flip_frequency/flipTimes);
+        System.out.println("Average flip frequency: " + avg_flip_frequency);
 
         System.out.println("Solution: " + assignmentMap);
 
 //        for(Clause clause: clauses){
 //            System.out.println(clause.assignment);
 //        }
-//        System.out.println("Verifier: " + Helper.verifier(assignmentMap, clauses));
+        System.out.println("Verifier: " + Helper.verifier(assignmentMap, clauses));
     }
 
     /**
@@ -115,14 +120,26 @@ public class WalkSATSearch {
      */
     public void run(){
         readFile();
+        long startTime = System.nanoTime();
         initialise();
         search();
+
+        long endTime   = System.nanoTime();
+        long totalTime = endTime - startTime;
+        runningTime = totalTime;
+//        System.out.println("runningtime: " + runningTime);
+
+
 //        System.out.println(assignmentMap);
 //        System.out.println(falseClauses);
 //        System.out.println(clausesContainingLiteralMap);x
 //        for(Clause clause: clauses){
 //            System.out.println(clause.assignment);
 //        }
+    }
+
+    public long getRunningTime(){
+        return runningTime;
     }
 
     /**
@@ -146,21 +163,33 @@ public class WalkSATSearch {
         assignmentMap.put(var, assignmentMap.get(var) == 1? 0 : 1);
         assignmentMap.put(var * -1, assignmentMap.get(var * -1) == 1? 0 : 1);
 
-//        initialiseClauseAssignment();
-        for(Clause clause: clauses){
+        for(Clause clause: clausesContainingLiteralMap.get(var)){
+            if(clause.getVarAssignment(var) == 1 && clause.getNumSatisfiedLiterals() == 1)
+                falseClauses.add(clause);
+            else if(clause.getNumSatisfiedLiterals() == 0)
+                falseClauses.remove(clause);
+            clause.flipAt(var);
+        }
+        for(Clause clause: clausesContainingLiteralMap.get(var * -1)){
+            if(clause.getVarAssignment(-1 * var) == 1 && clause.getNumSatisfiedLiterals() == 1)
+                falseClauses.add(clause);
+            else if(clause.getNumSatisfiedLiterals() == 0)
+                falseClauses.remove(clause);
             clause.flipAt(var);
         }
 
         // update all data structures
-        falseClauses = Helper.updateFalseClauses(clauses);
-        Helper.initialiseClausesContainingLiteral(numVar, clauses, clausesContainingLiteralMap);
+//        falseClauses = Helper.updateFalseClauses(clauses);
 
         // calculate running time
         long endTime   = System.nanoTime();
         long totalTime = endTime - startTime;
         long frequency = 1000000000/totalTime;
 //        System.out.println("flip frequency: " + frequency);
-        avg_flip_frequency += frequency;
+//        avg_flip_frequency += frequency;
+        if(flipTimes == 1){
+            avg_flip_frequency = frequency;
+        }
     }
 
     /**
