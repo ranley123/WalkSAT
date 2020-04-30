@@ -3,15 +3,19 @@ import java.util.HashMap;
 
 public class Clause {
     ArrayList<Integer> literals;
-    int id;
     int numSatisfiedLiterals;
     ArrayList<Integer> assignment;
+    private int id;
 
     public Clause(int id){
-        this.id = id;
         literals = new ArrayList<>();
         assignment = new ArrayList<>();
         numSatisfiedLiterals = 0;
+        this.id = id;
+    }
+
+    public int getId(){
+        return id;
     }
 
     public void updateAssignment(HashMap<Integer, Integer> assignmentMap){
@@ -83,6 +87,28 @@ public class Clause {
             sb.append(i + ", ");
         }
         System.out.println(sb.toString());
+    }
+
+    public int getVarAssignment(int var){
+        if(literals.contains(var)){
+            int index = literals.indexOf(var);
+            return assignment.get(index);
+        }
+        else{
+            return -1;
+        }
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) {
+            return true;
+        }
+        if (obj == null || obj.getClass() != this.getClass()) {
+            return false;
+        }
+        Clause clause = (Clause) obj;
+        return clause.getLiterals().equals(this.getLiterals());
     }
 
 }
