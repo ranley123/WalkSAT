@@ -17,8 +17,9 @@ public class WalkSATSearch {
 
     public static void main(String [] args){
         if(args.length != 1){
-            System.out.println("Usage: java WalkSAT [inputFile]");
+            System.out.println("Usage: java [jarName] [inputFile]");
         }
+        System.out.println("WalkSAT Search");
         String filename = args[0];
         WalkSATSearch walkSAT = new WalkSATSearch(filename);
         walkSAT.run();
