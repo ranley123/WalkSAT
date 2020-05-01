@@ -22,8 +22,9 @@ public class NoveltySearch {
 
     public static void main(String [] args){
         if(args.length != 1){
-            System.out.println("Usage: java WalkSAT [inputFile]");
+            System.out.println("Usage: java -jar [jarName] [inputFile]");
         }
+        System.out.println("Novelty Search");
         String filename = args[0];
         NoveltySearch noveltySearch = new NoveltySearch(filename);
         noveltySearch.run();

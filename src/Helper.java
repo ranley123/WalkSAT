@@ -14,7 +14,8 @@ public class Helper {
      */
     public static void readFile(String filename){
         try{
-            InputStream in = Helper.class.getResourceAsStream(filename);
+//            InputStream in = Helper.class.getResourceAsStream(filename);
+            InputStream in = new FileInputStream(filename);
             BufferedReader reader = new BufferedReader(new InputStreamReader(in));
             String line = "";
             int index = 0;
